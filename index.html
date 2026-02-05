@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Animated Weather App</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    background: linear-gradient(#87ceeb, #e0f6ff);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+/* ===== Weather Container ===== */
+.container {
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    width: 320px;
+    border-radius: 20px;
+    text-align: center;
+    z-index: 10;
+}
+
+/* ===== Input ===== */
+input {
+    width: 90%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+/* ===== Button ===== */
+button {
+    margin-top: 10px;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 12px;
+    background: #4fc3f7;
+    color: white;
+    cursor: pointer;
+}
+
+.result {
+    margin-top: 15px;
+    font-size: 18px;
+}
+
+/* ===== SUN ===== */
+.sun {
+    position: absolute;
+    top: 50px;
+    right: 80px;
+    width: 100px;
+    height: 100px;
+    background: #ffeb3b;
+    border-radius: 50%;
+    box-shadow: 0 0 40px #ffeb3b;
+    animation: rotate 20s linear infinite;
+    display: none;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ===== CLOUDS ===== */
+.cloud {
+    position: absolute;
+    top: 100px;
+    left: -150px;
+    width: 150px;
+    height: 80px;
+    background: white;
+    border-radius: 50px;
+    animation: moveClouds 25s linear infinite;
+    display: none;
+}
+
+@keyframes moveClouds {
+    from { left: -150px; }
+    to { left: 110%; }
+}
+
+/* ===== RAIN ===== */
+.rain {
+    position: absolute;
+    width: 2px;
+    height: 15px;
+    background: #2196f3;
+    animation: rainFall 0.5s linear infinite;
+}
+
+@keyframes rainFall {
+    from { transform: translateY(0); }
+    to { transform: translateY(100vh); }
+}
+
+/* ===== NIGHT ===== */
+.night {
+    background: linear-gradient(#0f2027, #203a43, #2c5364);
+}
+
+.moon {
+    position: absolute;
+    top: 60px;
+    right: 90px;
+    width: 80px;
+    height: 80px;
+    background: #f5f3ce;
+    border-radius: 50%;
+    box-shadow: 0 0 20px #fff;
+    display: none;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sun"></div>
+<div class="cloud"></div>
+<div class="moon"></div>
+
+<div class="container">
+    <h2>🌦️ Weather App</h2>
+    <input type="text" id="city" placeholder="Enter city">
+    <br>
+    <button onclick="getWeather()">Get Weather</button>
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+const apiKey = "YOUR API KEY HERE"; // Replace with your OpenWeatherMap API key
+
+const sun = document.querySelector(".sun");
+const cloud = document.querySelector(".cloud");
+const moon = document.querySelector(".moon");
+
+function clearEffects() {
+    sun.style.display = "none";
+    cloud.style.display = "none";
+    moon.style.display = "none";
+    document.body.classList.remove("night");
+    document.querySelectorAll(".rain").forEach(r => r.remove());
+    document.querySelectorAll(".star").forEach(s => s.remove());
+}
+
+function createRain() {
+    for (let i = 0; i < 80; i++) {
+        const drop = document.createElement("div");
+        drop.className = "rain";
+        drop.style.left = Math.random() * window.innerWidth + "px";
+        drop.style.top = Math.random() * window.innerHeight + "px";
+        drop.style.animationDuration = (Math.random() + 0.2) + "s";
+        document.body.appendChild(drop);
+    }
+}
+
+function createStars() {
+    for (let i = 0; i < 100; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.style.left = Math.random() * window.innerWidth + "px";
+        star.style.top = Math.random() * window.innerHeight + "px";
+        document.body.appendChild(star);
+    }
+}
+
+function getWeather() {
+    const city = document.getElementById("city").value;
+    const result = document.getElementById("result");
+
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`)
+    .then(res => res.json())
+    .then(data => {
+        clearEffects();
+
+        const weather = data.weather[0].main;
+        const hour = new Date().getHours();
+
+        const time = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
+        
+        result.innerHTML = `
+            🌡️ ${data.main.temp} °C <br>
+            🌥️ ${weather} <br>
+            🕐 ${new Date().toLocaleTimeString()}
+        `;
+
+        if (hour >= 18 || hour <= 5) {
+            document.body.classList.add("night");
+            moon.style.display = "block";
+            createStars();
+        }
+
+        if (weather === "Clear") sun.style.display = "block";
+        if (weather === "Clouds") cloud.style.display = "block";
+        if (weather === "Rain") createRain();
+    });
+}
+</script>
+
+</body>
+</html>
